@@ -13,7 +13,9 @@ void mouse_callback(GLFWwindow* window, double xPos, double yPos);
 const unsigned int SRC_WIDTH = 800;
 const unsigned int SRC_HEIGHT = 600;
 
-float lastX = 400, lastY = 300;
+float lastX = 400, lastY = 300, yaw = -90.0f, pitch = 0.0f;
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+bool firstMouse = true;
 
 int main()
 {
@@ -30,7 +32,7 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
@@ -87,7 +89,7 @@ int main()
 	glm::mat4 model = glm::mat4(1.0f);
 	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+	//glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 view;
 	glm::mat4 projection;
@@ -263,11 +265,36 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void mouse_callback(GLFWwindow* window, double xPos, double yPos)
 {
-	float xOffset = lastX - xPos;
-	float yOffset = yPos - yPos;
+	if (firstMouse)
+	{
+		lastX = xPos;
+		lastY = yPos;
+		firstMouse = false;
+	}
+
+	float xOffset = xPos - lastX;
+	float yOffset = lastY - yPos;
 	lastX = xPos;
 	lastY = yPos;
 
 	const float sensitivity = 0.05f;
+	xOffset *= sensitivity;
+	yOffset *= sensitivity;
 
+	std::cout << lastX << ' ' << lastY << ' ' << xOffset << ' ' << yOffset << '\n';
+
+	yaw += xOffset;
+	pitch += yOffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+	cameraFront = glm::normalize(direction);
 }
